@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Scanner Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        #video-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto 16px auto;
+        }
+
+        video {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border: 2px solid #000;
+            border-radius: 10px;
+        }
+
+        select,
+        button {
+            font-size: 18px;
+            padding: 12px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        button:active {
+            background-color: #0056b3;
+        }
+
+        #cam-qr-result {
+            display: block;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: teal;
+        }
+
+        /* Response container styling */
+        #response-container {
+            text-align: left;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 8px;
+            }
+
+            select,
+            button {
+                width: 90%;
+                font-size: 16px;
+            }
+        }
+
+        /* QR Scanner overlay styling adjustments */
+        #video-container.example-style-2 {
+            position: relative;
+            width: max-content;
+            height: max-content;
+            overflow: hidden;
+        }
+
+        #video-container.example-style-2 .scan-region-highlight {
+            border-radius: 30px;
+            outline: rgba(0, 0, 0, 0.25) solid 50vmax;
+        }
+
+        #video-container.example-style-2 .scan-region-highlight-svg {
+            display: none;
+        }
+
+        #video-container.example-style-2 .code-outline-highlight {
+            stroke: rgba(9, 255, 0, 0.5) !important;
+            stroke-width: 15 !important;
+            stroke-dasharray: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Scanner:</h1>
+
+    <!-- Video scan area -->
+    <div id="video-container">
+        <video id="qr-video"></video>
+    </div>
+
+    <!-- Camera options -->
+    <div>
+        <b>Preferred camera:</b>
+        <select id="cam-list">
+            <option value="environment" selected>Environment Facing (default)</option>
+            <option value="user">User Facing</option>
+        </select>
+    </div>
+
+    <!-- Detected result -->
+    <b>Detected ID:</b>
+    <span id="cam-qr-result">None</span>
+    <br />
+
+    <!-- Control buttons -->
+    <div>
+        <button id="start-button">Start Scanning</button>
+        <button id="stop-button">Stop Scanning</button>
+    </div>
+
+    <!-- Response container -->
+    <div id="response-container">
+        <h2>Request Response:</h2>
+        <div id="response"></div>
+    </div>
+
+    <script type="module">
+        import QrScanner from "https://cdn.jsdelivr.net/gh/nimiq/qr-scanner@master/qr-scanner.min.js";
+
+        // Retrieve secret from URL parameters or cookies.
+        const encodedSecret = handleSecret();
+        if (!encodedSecret) {
+            document.open();
+            document.write("Received no credentials. Please try again with credentials.");
+            document.close();
+            alert("No credentials found in URL or cookies. Please provide the secret.");
+        }
+
+        const secretObj = decodeSecret(encodedSecret);
+        // if (!secretObj || !secretObj.scriptUrl || !secretObj.spreadsheetId) {
+        //     alert("Invalid credentials provided. Please ensure format is correct.");
+        // }
+
+        var scriptUrl = secretObj.scriptUrl;
+        var sheetId = secretObj.spreadsheetId;
+
+        // Element references
+        const video = document.getElementById("qr-video");
+        const videoContainer = document.getElementById("video-container");
+        const camList = document.getElementById("cam-list");
+        const camQrResult = document.getElementById("cam-qr-result");
+        const responseContainer = document.getElementById("response");
+        const startButton = document.getElementById("start-button");
+        const stopButton = document.getElementById("stop-button");
+
+        // Function to render JSON data as an HTML table
+        function renderDataTable(data) {
+            let table = '<table class="data-table"><tbody>';
+            for (const [key, value] of Object.entries(data)) {
+                table += `<tr><th>${key}</th><td>${value}</td></tr>`;
+            }
+            table += "</tbody></table>";
+            return table;
+        }
+
+        // Function to send an API request with the scanned QR code data.
+        function sendRequest(item) {
+            if (!item) {
+                responseContainer.innerHTML = "Please enter an item.";
+                return Promise.resolve("");
+            }
+
+            //   // Retrieve secret from URL parameters or cookies.
+            //   const encodedSecret = handleSecret();
+            //   if (!encodedSecret) {
+            //     alert("No credentials found in URL or cookies. Please provide the secret.");
+            //     return Promise.resolve("");
+            //   }
+
+            //   const secretObj = decodeSecret(encodedSecret);
+            //   if (!secretObj || !secretObj.scriptUrl || !secretObj.spreadsheetId) {
+            //     alert("Invalid credentials provided.");
+            //     return Promise.resolve("");
+            //   }
+
+            //   var scriptUrl = secretObj.scriptUrl;
+            //   var sheetId = secretObj.spreadsheetId;
+
+            var requestUrl =
+                scriptUrl + "?id=" + encodeURIComponent(item) + "&sheetId=" + encodeURIComponent(sheetId);
+            console.log("Request URL: ", requestUrl);
+            return fetch(requestUrl)
+                .then(response => response.text())
+                .then(data => data)
+                .catch(error => {
+                    responseContainer.innerHTML = "Error: " + error;
+                    throw error;
+                });
+        }
+
+        // Callback for when a QR code is successfully scanned
+        function setResultOnQRScanned(label, result) {
+            scanner.stop();
+            // Hide the scan area once a QR is successfully scanned
+            videoContainer.style.display = "none";
+            console.log(result.data);
+            label.textContent = result.data;
+            label.style.color = "teal";
+            clearTimeout(label.highlightTimeout);
+            label.highlightTimeout = setTimeout(() => {
+                label.style.color = "inherit";
+            }, 100);
+
+            // Make the API request with the scanned data
+            sendRequest(result.data).then((data) => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    responseContainer.innerHTML = renderDataTable(jsonData);
+                } catch (error) {
+                    responseContainer.textContent = "Invalid JSON response";
+                }
+            });
+        }
+
+        // ####### Web Cam Scanning Setup #######
+        const scanner = new QrScanner(
+            video,
+            (result) => setResultOnQRScanned(camQrResult, result),
+            {
+                onDecodeError: (error) => {
+                    camQrResult.textContent = error;
+                    camQrResult.style.color = "inherit";
+                },
+                highlightScanRegion: true,
+                highlightCodeOutline: true,
+            }
+        );
+        videoContainer.className = "example-style-2";
+        scanner._updateOverlay();
+        scanner.setInversionMode("both");
+
+        // Start scanning immediately to load the camera list
+        scanner.start().then(() => {
+            QrScanner.listCameras(true).then((cameras) => {
+                cameras.forEach((camera) => {
+                    const option = document.createElement("option");
+                    option.value = camera.id;
+                    option.text = camera.label;
+                    camList.add(option);
+                });
+            });
+        });
+
+        // Change camera when selection is updated
+        camList.addEventListener("change", (event) => {
+            scanner.setCamera(event.target.value);
+        });
+
+        // Start button: Show the video container and start scanning
+        startButton.addEventListener("click", () => {
+            videoContainer.style.display = "flex";
+            scanner.start();
+        });
+
+        // Stop button: Stop scanning and hide the video container
+        stopButton.addEventListener("click", () => {
+            scanner.stop();
+            videoContainer.style.display = "none";
+        });
+
+        // For debugging purposes
+        window.scanner = scanner;
+
+        // ----- Secret parsing & storage functions -----
+
+        // Function to read URL parameters and return them as a JSON object
+        function getUrlParams() {
+            var paramsObject = {};
+            var queryString = window.location.search.substring(1);
+
+            if (queryString) {
+                var queryParams = queryString.split("&");
+
+                for (var i = 0; i < queryParams.length; i++) {
+                    var paramPair = queryParams[i].split("=");
+                    var paramKey = decodeURIComponent(paramPair[0]);
+                    var paramValue = decodeURIComponent(paramPair[1] || "");
+                    paramsObject[paramKey] = paramValue;
+                }
+            }
+
+            return paramsObject;
+        }
+
+        // Function to set a cookie with a specified key, value, and expiration in days
+        function setCookie(cookieName, cookieValue, expirationDays) {
+            var expires = "";
+
+            if (expirationDays) {
+                var expirationDate = new Date();
+                expirationDate.setTime(expirationDate.getTime() + expirationDays * 24 * 60 * 60 * 1000);
+                expires = "; expires=" + expirationDate.toUTCString();
+            }
+
+            document.cookie = cookieName + "=" + encodeURIComponent(cookieValue) + expires + "; path=/";
+        }
+
+        // Function to get the value of a cookie by its key
+        function getCookie(cookieName) {
+            var cookieString = document.cookie.split(";");
+
+            for (var i = 0; i < cookieString.length; i++) {
+                var cookie = cookieString[i].trim();
+
+                if (cookie.indexOf(cookieName + "=") === 0) {
+                    return decodeURIComponent(cookie.substring(cookieName.length + 1));
+                }
+            }
+
+            return null;
+        }
+
+        // Function to handle the secret: store URL param in cookie or retrieve from cookie
+        function handleSecret() {
+            const params = getUrlParams();
+            if (params.secret) {
+                setCookie("secret", params.secret, 7);
+                return params.secret;
+            }
+            const storedSecret = getCookie("secret");
+            if (storedSecret) {
+                return storedSecret;
+            }
+            return null;
+        }
+
+        // Function to decode the secret into an object containing scriptUrl and spreadsheetId
+        function decodeSecret(secretEncoded) {
+            try {
+                const decoded = decodeURIComponent(secretEncoded);
+                const base64Decoded = atob(decoded);
+                const secretObj = JSON.parse(base64Decoded);
+                return secretObj;
+            } catch (error) {
+                console.error("Failed to decode secret:", error);
+                return null;
+            }
+        }
+    </script>
+</body>
+
+</html>

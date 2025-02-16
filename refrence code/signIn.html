@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Apps Script Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+
+        input,
+        button {
+            font-size: 16px;
+            padding: 10px;
+            margin: 5px;
+        }
+
+        #response {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Check Item in Google Sheet</h2>
+    <label for="item">Enter Item:</label>
+    <input type="text" id="item" placeholder="Type an item..." required>
+    <button onclick="sendRequest()">Check</button>
+
+    <div id="response"></div>
+
+    <script>
+        function sendRequest() {
+            var item = document.getElementById("item").value.trim();
+            if (!item) {
+                document.getElementById("response").innerHTML = "Please enter an item.";
+                return;
+            }
+
+            var scriptUrl = "";
+            var sheetId = "";
+            var requestUrl = scriptUrl + "?id=" + encodeURIComponent(item) + "&sheetId=" + encodeURIComponent(sheetId);
+
+            // Log the constructed URL to check for correctness
+            console.log("Request URL: ", requestUrl);
+
+            fetch(requestUrl)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById("response").innerHTML = "Response: " + JSON.stringify(JSON.parse(data), null, 2);
+                })
+                .catch(error => {
+                    document.getElementById("response").innerHTML = "Error: " + error;
+                });
+        }
+
+    </script>
+
+</body>
+
+</html>
