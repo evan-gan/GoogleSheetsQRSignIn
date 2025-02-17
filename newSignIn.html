@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QR Scanner Demo</title>
+    <title>Event sign in QR scanner</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,15 +64,33 @@
 
         /* Response container styling */
         #response-container {
-            text-align: left;
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* background-color: rgba(255, 255, 255, 0.9); */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            display: flex;
+        }
+
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            display: flex;
         }
 
         .data-table {
@@ -126,42 +144,67 @@
             stroke-width: 15 !important;
             stroke-dasharray: none !important;
         }
+
+        .loader {
+            width: 80px;
+            height: 70px;
+            border: 5px solid #000;
+            padding: 0 8px;
+            box-sizing: border-box;
+            background:
+                linear-gradient(#fff 0 0) 0 0/8px 20px,
+                linear-gradient(#fff 0 0) 100% 0/8px 20px,
+                radial-gradient(farthest-side, #fff 90%, #0000) 0 5px/8px 8px content-box,
+                #000;
+            background-repeat: no-repeat;
+            animation: l3 2s infinite linear;
+        }
+
+        @keyframes l3 {
+            25% {
+                background-position: 0 0, 100% 100%, 100% calc(100% - 5px)
+            }
+
+            50% {
+                background-position: 0 100%, 100% 100%, 0 calc(100% - 5px)
+            }
+
+            75% {
+                background-position: 0 100%, 100% 0, 100% 5px
+            }
+        }
     </style>
 </head>
 
 <body>
-    <h1>Scanner:</h1>
+    <div id="scanner-container">
+        <!-- Video scan area -->
+        <div id="video-container">
+            <video id="qr-video"></video>
+        </div>
 
-    <!-- Video scan area -->
-    <div id="video-container">
-        <video id="qr-video"></video>
-    </div>
-
-    <!-- Camera options -->
-    <div>
+        <!-- Camera options -->
         <b>Preferred camera:</b>
         <select id="cam-list">
             <option value="environment" selected>Environment Facing (default)</option>
             <option value="user">User Facing</option>
         </select>
+
+        <!-- Control buttons -->
+        <div>
+            <button id="start-button">Start Scanning</button>
+            <button id="stop-button">Stop Scanning</button>
+        </div>
     </div>
 
-    <!-- Detected result -->
-    <b>Detected ID:</b>
-    <span id="cam-qr-result">None</span>
-    <br />
-
-    <!-- Control buttons -->
-    <div>
-        <button id="start-button">Start Scanning</button>
-        <button id="stop-button">Stop Scanning</button>
+    <div id="loading-overlay" style="display: none;">
+        <h2>Processing...</h2>
+        <div class="loader"></div>
     </div>
+
 
     <!-- Response container -->
-    <div id="response-container">
-        <h2>Request Response:</h2>
-        <div id="response"></div>
-    </div>
+    <div id="response-container" style="display: none;"></div>
 
     <script type="module">
         import QrScanner from "https://cdn.jsdelivr.net/gh/nimiq/qr-scanner@master/qr-scanner.min.js";
@@ -172,13 +215,9 @@
             document.open();
             document.write("Received no credentials. Please try again with credentials.");
             document.close();
-            alert("No credentials found in URL or cookies. Please provide the secret.");
         }
 
         const secretObj = decodeSecret(encodedSecret);
-        // if (!secretObj || !secretObj.scriptUrl || !secretObj.spreadsheetId) {
-        //     alert("Invalid credentials provided. Please ensure format is correct.");
-        // }
 
         var scriptUrl = secretObj.scriptUrl;
         var sheetId = secretObj.spreadsheetId;
@@ -187,88 +226,20 @@
         const video = document.getElementById("qr-video");
         const videoContainer = document.getElementById("video-container");
         const camList = document.getElementById("cam-list");
-        const camQrResult = document.getElementById("cam-qr-result");
-        const responseContainer = document.getElementById("response");
+        const responseContainer = document.getElementById("response-container");
         const startButton = document.getElementById("start-button");
         const stopButton = document.getElementById("stop-button");
 
-        // Function to render JSON data as an HTML table
-        function renderDataTable(data) {
-            let table = '<table class="data-table"><tbody>';
-            for (const [key, value] of Object.entries(data)) {
-                table += `<tr><th>${key}</th><td>${value}</td></tr>`;
-            }
-            table += "</tbody></table>";
-            return table;
-        }
-
-        // Function to send an API request with the scanned QR code data.
-        function sendRequest(item) {
-            if (!item) {
-                responseContainer.innerHTML = "Please enter an item.";
-                return Promise.resolve("");
-            }
-
-            //   // Retrieve secret from URL parameters or cookies.
-            //   const encodedSecret = handleSecret();
-            //   if (!encodedSecret) {
-            //     alert("No credentials found in URL or cookies. Please provide the secret.");
-            //     return Promise.resolve("");
-            //   }
-
-            //   const secretObj = decodeSecret(encodedSecret);
-            //   if (!secretObj || !secretObj.scriptUrl || !secretObj.spreadsheetId) {
-            //     alert("Invalid credentials provided.");
-            //     return Promise.resolve("");
-            //   }
-
-            //   var scriptUrl = secretObj.scriptUrl;
-            //   var sheetId = secretObj.spreadsheetId;
-
-            var requestUrl =
-                scriptUrl + "?id=" + encodeURIComponent(item) + "&sheetId=" + encodeURIComponent(sheetId);
-            console.log("Request URL: ", requestUrl);
-            return fetch(requestUrl)
-                .then(response => response.text())
-                .then(data => data)
-                .catch(error => {
-                    responseContainer.innerHTML = "Error: " + error;
-                    throw error;
-                });
-        }
-
-        // Callback for when a QR code is successfully scanned
-        function setResultOnQRScanned(label, result) {
-            scanner.stop();
-            // Hide the scan area once a QR is successfully scanned
-            videoContainer.style.display = "none";
-            console.log(result.data);
-            label.textContent = result.data;
-            label.style.color = "teal";
-            clearTimeout(label.highlightTimeout);
-            label.highlightTimeout = setTimeout(() => {
-                label.style.color = "inherit";
-            }, 100);
-
-            // Make the API request with the scanned data
-            sendRequest(result.data).then((data) => {
-                try {
-                    const jsonData = JSON.parse(data);
-                    responseContainer.innerHTML = renderDataTable(jsonData);
-                } catch (error) {
-                    responseContainer.textContent = "Invalid JSON response";
-                }
-            });
-        }
+        const scannerContainer = document.getElementById("scanner-container");
+        const loadingOverlay = document.getElementById("loading-overlay");
 
         // ####### Web Cam Scanning Setup #######
         const scanner = new QrScanner(
             video,
-            (result) => setResultOnQRScanned(camQrResult, result),
+            (result) => setResultOnQRScanned(result), // Callback when QR code is scanned
             {
                 onDecodeError: (error) => {
-                    camQrResult.textContent = error;
-                    camQrResult.style.color = "inherit";
+                    console.log("QR scan error:\n" + JSON.stringify(error))
                 },
                 highlightScanRegion: true,
                 highlightCodeOutline: true,
@@ -310,7 +281,105 @@
         // For debugging purposes
         window.scanner = scanner;
 
-        // ----- Secret parsing & storage functions -----
+        // ----- Secret parsing, storage functions, and other generic functions -----
+
+        // Callback for when a QR code is successfully scanned
+        function setResultOnQRScanned(result) {
+            console.log(JSON.stringify(result));
+            if (result.data == "") {
+                console.log("Empty data")
+                return
+            }
+            // Hide the scan area once a QR is successfully scanned
+            scanner.stop();
+            scannerContainer.style.display = "none";
+            loadingOverlay.style.display = "flex";
+            //EDIT HERE
+
+            // Make the API request with the scanned data
+            sendRequest(result.data).then((data) => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    responseContainer.innerHTML = displayParticipantData(jsonData);
+                } catch (error) {
+                    responseContainer.textContent = "Hmm, an error occurred. Please try again.";
+                }
+
+                responseContainer.style.display = "flex";
+            });
+        }
+
+        // Function to send an API request with the scanned QR code data.
+        function sendRequest(item) {
+            if (!item) {
+                responseContainer.innerHTML = "Please enter an item.";
+                return Promise.resolve("");
+            }
+
+            var requestUrl =
+                scriptUrl + "?id=" + encodeURIComponent(item) + "&sheetId=" + encodeURIComponent(sheetId);
+            console.log("Request URL: ", requestUrl);
+            return fetch(requestUrl)
+                .then(response => response.text())
+                .then(data => data)
+                .catch(error => {
+                    responseContainer.innerHTML = "Error: " + error;
+                    throw error;
+                });
+        }
+
+        // Function to render JSON data as an HTML table
+        function displayParticipantData(data) {
+            loadingOverlay.style.display = "none";
+            let html = "";
+            let bgColor = "";
+
+            if (data && data.name && typeof data.forms !== 'undefined') {
+                if (data.forms) {
+                    bgColor = "green";
+                    html += `
+                    <div style="background-color: ${bgColor}; padding: 20px; border-radius: 5px;">
+                        <h2>${data.name}</h2>
+                    </div>
+                `;
+                } else {
+                    bgColor = "red";
+                    // Set the entire page background to red.
+                    document.body.style.backgroundColor = bgColor;
+                    html += `
+                    <div style="padding: 20px; border-radius: 5px;">
+                        <h2>${data.name}</h2>
+                        <p>${data.name}'s forms are not in our system. They should check the email they used to sign up (${data.email}) for instructions on what to do.</p>
+                    </div>
+                `;
+                }
+            } else {
+                bgColor = "red";
+                document.body.style.backgroundColor = bgColor;
+                html += `
+                <div style="padding: 20px; border-radius: 5px;">
+                    <h2>Person not found</h2>
+                </div>
+            `;
+            }
+
+            // Place the "Return to scanner" button below the response.
+            html += `
+            <br>
+            <div>
+                <button onclick="
+                    document.body.style.backgroundColor = 'white';
+                    document.getElementById('response-container').style.display='none';
+                    document.getElementById('scanner-container').style.display='block';
+                    scanner.start();
+                ">
+                    Return to scanner
+                </button>
+            </div>
+        `;
+
+            return html;
+        }
 
         // Function to read URL parameters and return them as a JSON object
         function getUrlParams() {
