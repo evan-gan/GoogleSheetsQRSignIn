@@ -189,12 +189,9 @@
             <option value="environment" selected>Environment Facing (default)</option>
             <option value="user">User Facing</option>
         </select>
-
+        <br>
         <!-- Control buttons -->
-        <div>
-            <button id="start-button">Start Scanning</button>
-            <button id="stop-button">Stop Scanning</button>
-        </div>
+        <button id="control-toggle">Stop Scanning</button>
     </div>
 
     <div id="loading-overlay" style="display: none;">
@@ -227,8 +224,7 @@
         const videoContainer = document.getElementById("video-container");
         const camList = document.getElementById("cam-list");
         const responseContainer = document.getElementById("response-container");
-        const startButton = document.getElementById("start-button");
-        const stopButton = document.getElementById("stop-button");
+        const controllToggle = document.getElementById("control-toggle");
 
         const scannerContainer = document.getElementById("scanner-container");
         const loadingOverlay = document.getElementById("loading-overlay");
@@ -267,15 +263,16 @@
         });
 
         // Start button: Show the video container and start scanning
-        startButton.addEventListener("click", () => {
-            videoContainer.style.display = "flex";
-            scanner.start();
-        });
-
-        // Stop button: Stop scanning and hide the video container
-        stopButton.addEventListener("click", () => {
-            scanner.stop();
-            videoContainer.style.display = "none";
+        controllToggle.addEventListener("click", () => {
+            if (controllToggle.textContent === "Stop Scanning") {
+                scanner.stop();
+                controllToggle.textContent = "Start Scanning";
+                videoContainer.style.display = "none";
+            } else {
+                scanner.start();
+                controllToggle.textContent = "Stop Scanning";
+                videoContainer.style.display = "flex";
+            }
         });
 
         // For debugging purposes
@@ -338,14 +335,13 @@
                 if (data.forms) {
                     bgColor = "green";
                     html += `
-                    <div style="background-color: ${bgColor}; padding: 20px; border-radius: 5px;">
+                    <div style="padding: 20px; border-radius: 5px;">
                         <h2>${data.name}</h2>
                     </div>
                 `;
                 } else {
                     bgColor = "red";
                     // Set the entire page background to red.
-                    document.body.style.backgroundColor = bgColor;
                     html += `
                     <div style="padding: 20px; border-radius: 5px;">
                         <h2>${data.name}</h2>
@@ -355,7 +351,6 @@
                 }
             } else {
                 bgColor = "red";
-                document.body.style.backgroundColor = bgColor;
                 html += `
                 <div style="padding: 20px; border-radius: 5px;">
                     <h2>Person not found</h2>
@@ -377,7 +372,7 @@
                 </button>
             </div>
         `;
-
+            document.body.style.backgroundColor = bgColor;
             return html;
         }
 
