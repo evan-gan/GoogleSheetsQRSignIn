@@ -98,10 +98,12 @@ function sendFormReminder(name, email) {
   var subject = "Scrapyard Boston Liability Form";
   var body = "Hi " + name + ",<br><br>" +
              "We just checked you in and we don't have your liability and media release form in our system.<br><br>" +
-             "If you are:<br>" +
+             "# If you have not filled out the waiver and are:<br>" +
              "- Above 18 fill it out <a href='https://examplelink.com'>here!</a><br>" +
              "- Under 18 forward/text this email to a parent and have them fill it out <a href='https://examplelink.com'>here!</a><br><br>" +
-             "Once your form is filled out, please reply to this email with a copy of the completed form & check in with whomever checked you in.<br><br>" +
+             "# If you have filled out the waiver:<br>" +
+             "- Please reply to this email with that copy attached & get re-checked in.<br><br>" +
+             "Once your form is filled out, please reply to this email with a copy of the completed form and get re-checked in.<br><br>" +
              "Best,<br>" +
              "The Scrapyard Boston Team.";
   
