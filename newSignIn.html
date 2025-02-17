@@ -336,7 +336,7 @@
                     bgColor = "green";
                     html += `
                     <div style="padding: 20px; border-radius: 5px;">
-                        <h2>${data.name}</h2>
+                        <h1>${data.name} is checked in and all set!</h1>
                     </div>
                 `;
                 } else {
@@ -344,8 +344,7 @@
                     // Set the entire page background to red.
                     html += `
                     <div style="padding: 20px; border-radius: 5px;">
-                        <h2>${data.name}</h2>
-                        <p>${data.name}'s forms are not in our system. They should check the email they used to sign up (${data.email}) for instructions on what to do.</p>
+                        <h1>${data.name}'s forms are not in our system. They should check the email they used to sign up (${data.email}) for instructions on what to do.</h1>
                     </div>
                 `;
                 }
@@ -353,7 +352,7 @@
                 bgColor = "red";
                 html += `
                 <div style="padding: 20px; border-radius: 5px;">
-                    <h2>Person not found</h2>
+                    <h1>Person not found...</h1>
                 </div>
             `;
             }
