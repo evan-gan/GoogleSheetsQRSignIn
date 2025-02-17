@@ -29,7 +29,7 @@ function doGet(e) {
   }
 
   // Ensure required columns exist
-  var requiredCols = ["ID", "Name", "Arrived?", "Forms?", "Email", "Reminder email sent?"];
+  var requiredCols = ["ID", "Legal Name", "Name", "Arrived?", "Forms?", "Email", "Reminder email sent?"];
   for (var j = 0; j < requiredCols.length; j++) {
     if (headerMap[requiredCols[j]] === undefined) {
       return ContentService.createTextOutput(JSON.stringify({ error: "Missing required column: " + requiredCols[j] }))
@@ -65,7 +65,7 @@ function doGet(e) {
       if ((formsVal === false || String(formsVal).toLowerCase() === "false") &&
           !(reminderSent === true || String(reminderSent).toLowerCase() === "true")) {
         var recipientEmail = row[headerMap["Email"]];
-        sendFormReminder(row[headerMap["Name"]], recipientEmail);
+        sendFormReminder(row[headerMap["Legal Name"]], recipientEmail);
 
         // Update "Reminder email sent?" to true
         var reminderCol = headerMap["Reminder email sent?"] + 1;
