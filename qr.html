@@ -1,0 +1,22 @@
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Get UUID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const uuid = urlParams.get('UUID'); // Fallback to all 1's
+
+        // Create the iframe with dynamic UUID
+        const iframe = document.createElement('iframe');
+        size = Math.min(window.innerWidth, window.innerHeight)
+        iframe.src = `https://emn178.github.io/online-tools/qr-code/?input=${encodeURIComponent(uuid)}&type=svg&size=${size}&padding=16&ec=L&dot_option_type=rounded&dot_option_color=%23000&corners_square_option_color=%23000&corners_dot_option_color=%23000&background_option_color=%23fff&image_type=url&image_size=0.4&image_margin=0&image_show_background=0`;
+        iframe.frameBorder = "0";
+        iframe.scrolling = "no";
+        iframe.width = size.toString();
+        iframe.height = size.toString();
+        iframe.style.position = "absolute";
+        iframe.style.top = "50%";
+        iframe.style.left = "50%";
+        iframe.style.transform = "translate(-50%, -50%)";
+        // Append iframe to body after the page is ready
+        document.body.appendChild(iframe);
+    });
+</script>

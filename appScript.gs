@@ -113,3 +113,42 @@ function sendFormReminder(name, email) {
     htmlBody: body
   });
 }
+
+/**
+ * Generates a 25-character UUID from the given input, using uppercase letters and numbers.
+ *
+ * @param {string|number} input The input value from the cell.
+ * @return {string} The 25-character UUID.
+ * @customfunction
+ */
+function MAKE_UUID(input) {
+  // Ensure the input is a string
+  input = input.toString();
+  
+  // Compute the MD5 digest of the input
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, input);
+  
+  // Convert the digest (byte array) to a hex string
+  var hex = digest.map(function(byte) {
+    // Handle negative bytes and ensure two-digit hex values
+    var val = (byte < 0 ? byte + 256 : byte).toString(16);
+    return (val.length === 1 ? "0" + val : val);
+  }).join("");
+  
+  // Convert the hex string to a BigInt
+  var bigIntValue = BigInt("0x" + hex);
+  
+  // Convert the BigInt to a base36 string and then to uppercase
+  var base36 = bigIntValue.toString(36).toUpperCase();
+  
+  // Ensure the UUID is exactly 25 characters:
+  // If it's too short, pad with leading zeros; if it's too long, trim it.
+  if (base36.length < 25) {
+    base36 = base36.padStart(25, "0");
+  } else if (base36.length > 25) {
+    base36 = base36.substr(0, 25);
+  }
+  
+  return base36;
+}
+

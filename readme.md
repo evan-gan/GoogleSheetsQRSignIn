@@ -3,7 +3,36 @@
 Instructions on how to use comming soon™
 
 Readme is still a work in progress...
+<details>
+<summary>Spreadsheet setup</summary>
 
+  
+<details>
+<summary> - Spreadsheet data population & restrictions</summary>
+
+## Spreadsheet Requirements
+
+For the spreadsheet to function properly, ensure it includes the following columns with **exactly** the same headers:
+
+| Email | ID | Name | Legal Name | Arrived? | Forms? | Reminder email sent? |
+|-------|----|------|------------|----------|--------|----------------------|
+
+- **Note:** You may reorder these columns as needed. However, **do not** change the spelling or modify any header names, as the code relies on them to locate the correct data.
+
+## Columns to Populate
+
+You need to populate the following columns:
+
+- **Email**
+- **Name**
+- **Legal Name**
+
+> **Tip:** I'd recommended to populating the **Forms?** column shortly before the event with people who filled out their forms before the event.
+</details>
+
+<details>
+<summary>Spreadsheet creation & setup</summary>
+  
 # Setup (3-4 min):
 
 <details>
@@ -88,4 +117,6 @@ Readme is still a work in progress...
   3. Share them with your sign-in helpers.
 ![1r](https://github.com/user-attachments/assets/9f769502-d910-492a-8952-38d3a449e34f)
   <!-- Screenshot: Display of the generated link and QR code on the website -->
+</details>
+</details>
 </details>
