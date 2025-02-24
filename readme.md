@@ -1,41 +1,22 @@
 # A simple QR code sign in app with google sheets as a backend.
 
-Instructions on how to use comming soon™
+# About the project:
 
-Readme is still a work in progress...
+### A bit of background:
+I ran a hackathon named Scrapyard Boston in November, 2024. About 50 people showed up. Signing people in was really hectic and stressful as you had to get their name _(Figure out how to spell it)_, search it in a spreadsheet, and if they didn't have their liability forms in our system, help them find it or fill it out again (rushing so the 40 people waiting in line behind them would not have to wait too long).
 
-<details>
-<summary>Spreadsheet setup</summary>
+### My solution:
+A QR code we can send to event attendees ahead of time so they can pull up the QR code on their phone and we can scan them in really quickly. 
 
-<details>
-<summary> - Spreadsheet data population & restrictions</summary>
+### What this project does:
+I made a website to share credentials for the very user friendly check-in scanner webpage so multiple people can help sign people in. If the person being signed in doesn't have their forms in, it sends them an email with info on how to get their forms in and what to do after they get them in. Oh, and did I mention it automatically marks people as present in a Google sheet that is still human editable for edge cases? The whole project is based around google sheets. Once you populate attendee data into the sheet, a mail merge style spreadsheet is generated for ease of sending emails out with the attendee QR code.
 
-## Spreadsheet Requirements
 
-For the spreadsheet to function properly, ensure it includes the following columns with **exactly** the same headers:
-
-| Email | ID  | Name | Legal Name | Arrived? | Forms? | Reminder email sent? |
-| ----- | --- | ---- | ---------- | -------- | ------ | -------------------- |
-
-- **Note:** You may reorder these columns as needed. However, **do not** change the spelling or modify any header names, as the code relies on them to locate the correct data.
-
-## Columns to Populate
-
-You need to populate the following columns:
-
-- **Email**
-- **Name**
-- **Legal Name**
-
-> **Tip:** I'd recommended to populating the **Forms?** column shortly before the event with people who filled out their forms before the event.
-
-</details>
-
+# Setup:
 <details>
 <summary>Spreadsheet creation & setup</summary>
-  
-# Setup (3-4 min):
 
+## Setup (3-4 min):
 <details>
   <summary>Step 1: Make a Copy of the Document</summary>
 
@@ -122,5 +103,29 @@ You need to populate the following columns:
    ![1r](https://github.com/user-attachments/assets/9f769502-d910-492a-8952-38d3a449e34f)
      <!-- Screenshot: Display of the generated link and QR code on the website -->
    </details>
-   </details>
-   </details>
+---
+   </details> <!-- End "Spreadsheet creation & setup" dropdown -->
+
+
+<details> <!-- Start "Spreadsheet data population & requirements" dropdown -->
+<summary>Spreadsheet data population & requirements</summary>
+
+## Spreadsheet Requirements
+
+For the spreadsheet to function properly, ensure it includes the following columns with **exactly** the same headers:
+
+| Email | ID  | Name | Legal Name | Arrived? | Forms? | Reminder email sent? |
+| ----- | --- | ---- | ---------- | -------- | ------ | -------------------- |
+
+- **Note:** You may reorder these columns as needed. However, **do not** change the spelling or modify any header names, as the code relies on them to locate the correct data.
+
+## Columns to Populate
+
+You need to populate the following columns:
+- **Email**
+- **Name**
+- **Legal Name**
+
+> **Tip:** I'd recommended to populating the **Forms?** column shortly before the event with people who filled out their forms before the event.
+
+</details> <!-- End "Spreadsheet data population & requirements" dropdown -->
